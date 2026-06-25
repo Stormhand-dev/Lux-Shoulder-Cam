@@ -1,0 +1,148 @@
+<Ui xmlns="http://www.blizzard.com/wow/ui/"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.blizzard.com/wow/ui/ ..\FrameXML\UI.xsd">
+
+    <Frame name="lscFrame" toplevel="true" movable="true"
+           enableMouse="true" hidden="true">
+        <Size><AbsDimension x="300" y="220"/></Size>
+        <Anchors><Anchor point="CENTER"/></Anchors>
+        <Backdrop bgFile="Interface\DialogFrame\UI-DialogBox-Background"
+                  edgeFile="Interface\DialogFrame\UI-DialogBox-Border" tile="true">
+            <TileSize><AbsValue val="32"/></TileSize>
+            <EdgeSize><AbsValue val="32"/></EdgeSize>
+            <Insets><AbsInset left="11" right="12" top="12" bottom="11"/></Insets>
+        </Backdrop>
+        <Scripts>
+            <OnLoad>LSC_OnLoad()</OnLoad>
+            <OnEvent>LSC_OnEvent(event, arg1)</OnEvent>
+        </Scripts>
+
+        <Layers>
+            <Layer level="ARTWORK">
+
+                <FontString name="lscTitle" inherits="GameFontNormalLarge"
+                            justifyH="CENTER" text="LuxShoulderCam">
+                    <Anchors>
+                        <Anchor point="TOP">
+                            <Offset><AbsDimension x="0" y="-18"/></Offset>
+                        </Anchor>
+                    </Anchors>
+                    <Color r="1.0" g="0.82" b="0.0"/>
+                </FontString>
+
+                <FontString name="lscLblH" inherits="GameFontNormal" text="Height:">
+                    <Anchors>
+                        <Anchor point="TOPLEFT">
+                            <Offset><AbsDimension x="18" y="-54"/></Offset>
+                        </Anchor>
+                    </Anchors>
+                </FontString>
+
+                <FontString name="LSC_Val_Height" inherits="GameFontHighlightLarge"
+                            justifyH="CENTER" text="0.00">
+                    <Anchors>
+                        <Anchor point="TOPLEFT">
+                            <Offset><AbsDimension x="80" y="-50"/></Offset>
+                        </Anchor>
+                    </Anchors>
+                </FontString>
+
+                <FontString name="lscLblX" inherits="GameFontNormal" text="Horizontal:">
+                    <Anchors>
+                        <Anchor point="TOPLEFT">
+                            <Offset><AbsDimension x="18" y="-104"/></Offset>
+                        </Anchor>
+                    </Anchors>
+                </FontString>
+
+                <FontString name="LSC_Val_Horizontal" inherits="GameFontHighlightLarge"
+                            justifyH="CENTER" text="0.00">
+                    <Anchors>
+                        <Anchor point="TOPLEFT">
+                            <Offset><AbsDimension x="80" y="-100"/></Offset>
+                        </Anchor>
+                    </Anchors>
+                </FontString>
+
+                <FontString name="LSC_Status" inherits="GameFontNormalSmall"
+                            justifyH="CENTER" text="Waiting for DLL...">
+                    <Anchors>
+                        <Anchor point="BOTTOM">
+                            <Offset><AbsDimension x="0" y="16"/></Offset>
+                        </Anchor>
+                    </Anchors>
+                </FontString>
+
+            </Layer>
+        </Layers>
+
+        <Frames>
+
+            <!-- Height buttons -->
+            <Button name="lscBtnRaise" inherits="UIPanelButtonTemplate" text="+ Up">
+                <Size><AbsDimension x="90" y="22"/></Size>
+                <Anchors>
+                    <Anchor point="TOPLEFT">
+                        <Offset><AbsDimension x="175" y="-48"/></Offset>
+                    </Anchor>
+                </Anchors>
+                <Scripts><OnClick>LSC_RaiseCamera()</OnClick></Scripts>
+            </Button>
+
+            <Button name="lscBtnLower" inherits="UIPanelButtonTemplate" text="- Down">
+                <Size><AbsDimension x="90" y="22"/></Size>
+                <Anchors>
+                    <Anchor point="TOPLEFT">
+                        <Offset><AbsDimension x="175" y="-73"/></Offset>
+                    </Anchor>
+                </Anchors>
+                <Scripts><OnClick>LSC_LowerCamera()</OnClick></Scripts>
+            </Button>
+
+            <!-- Horizontal buttons -->
+            <Button name="lscBtnRight" inherits="UIPanelButtonTemplate" text="+ Right">
+                <Size><AbsDimension x="90" y="22"/></Size>
+                <Anchors>
+                    <Anchor point="TOPLEFT">
+                        <Offset><AbsDimension x="175" y="-98"/></Offset>
+                    </Anchor>
+                </Anchors>
+                <Scripts><OnClick>LSC_MoveRight()</OnClick></Scripts>
+            </Button>
+
+            <Button name="lscBtnLeft" inherits="UIPanelButtonTemplate" text="- Left">
+                <Size><AbsDimension x="90" y="22"/></Size>
+                <Anchors>
+                    <Anchor point="TOPLEFT">
+                        <Offset><AbsDimension x="175" y="-123"/></Offset>
+                    </Anchor>
+                </Anchors>
+                <Scripts><OnClick>LSC_MoveLeft()</OnClick></Scripts>
+            </Button>
+
+            <!-- Bottom buttons -->
+            <Button name="lscBtnReset" inherits="UIPanelButtonTemplate" text="Reset">
+                <Size><AbsDimension x="100" y="22"/></Size>
+                <Anchors>
+                    <Anchor point="TOPLEFT">
+                        <Offset><AbsDimension x="18" y="-160"/></Offset>
+                    </Anchor>
+                </Anchors>
+                <Scripts><OnClick>LSC_ResetCamera()</OnClick></Scripts>
+            </Button>
+
+            <Button name="lscBtnClose" inherits="UIPanelButtonTemplate" text="Close">
+                <Size><AbsDimension x="100" y="22"/></Size>
+                <Anchors>
+                    <Anchor point="TOPLEFT">
+                        <Offset><AbsDimension x="165" y="-160"/></Offset>
+                    </Anchor>
+                </Anchors>
+                <Scripts><OnClick>lscFrame:Hide()</OnClick></Scripts>
+            </Button>
+
+        </Frames>
+
+    </Frame>
+
+</Ui>

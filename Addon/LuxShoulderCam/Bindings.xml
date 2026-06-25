@@ -1,0 +1,27 @@
+<Bindings>
+
+    <Binding name="LSCTOGGLE" header="LUXSHOULDERCAM" description="LuxShoulderCam: Toggle panel">
+        LSC_Toggle()
+    </Binding>
+
+    <Binding name="LSCRAISE" description="LuxShoulderCam: Raise camera">
+        LSC_RaiseCamera()
+    </Binding>
+
+    <Binding name="LSCLOWER" description="LuxShoulderCam: Lower camera">
+        LSC_LowerCamera()
+    </Binding>
+
+    <Binding name="LSCRIGHT" description="LuxShoulderCam: Move camera right">
+        LSC_MoveRight()
+    </Binding>
+
+    <Binding name="LSCLEFT" description="LuxShoulderCam: Move camera left">
+        LSC_MoveLeft()
+    </Binding>
+
+    <Binding name="LSCRESET" description="LuxShoulderCam: Reset camera">
+        LSC_ResetCamera()
+    </Binding>
+
+</Bindings>
