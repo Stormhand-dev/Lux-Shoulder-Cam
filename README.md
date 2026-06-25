@@ -81,9 +81,6 @@ Values are in WoW internal units (yards). Going beyond these limits causes visua
 - Coexists with ReShade, OBS, and RivaTuner (BeginScene hook uses MinHook with retry logic)
 - Designed for **private servers** — use on official Blizzard servers violates ToS
 
-- Coexists with ReShade, OBS, and RivaTuner (BeginScene hook uses MinHook with retry logic)
-- Designed for **private servers** — use on official Blizzard servers violates ToS
-
 ---
 
 ## Credits
