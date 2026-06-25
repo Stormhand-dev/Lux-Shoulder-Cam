@@ -24,7 +24,7 @@
 ## Requirements
 
 - World of Warcraft **3.3.5a (build 12340)**
-- [Lexara](https://github.com/your-username/lexara) — HD font renderer that also acts as the DLL loader
+- [Lexara](https://github.com/Stormhand-dev/Lexara---HD-Font-Renderer-for-WoW-3.3.5) — HD font renderer that also acts as the DLL loader
 
 ---
 
