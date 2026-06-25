@@ -2,7 +2,7 @@
 
 **LuxShoulderCam** is a WoW 3.3.5a (build 12340) mod that adds a real-time over-the-shoulder camera offset — height and horizontal position — controlled via an in-game panel and keybindings.
 
-> Drop `LuxShoulderCam.dll` into your WoW root folder (loaded automatically by [Lexara](https://github.com/your-username/lexara)) and install the addon. No configuration file needed — settings are saved per character.
+> Drop `LuxShoulderCam.dll` into your WoW root folder (loaded automatically by [Lexara](https://github.com/Stormhand-dev/Lexara---HD-Font-Renderer-for-WoW-3.3.5) and install the addon. No configuration file needed — settings are saved per character.
 
 ![WoW 3.3.5](https://img.shields.io/badge/WoW-3.3.5a%20%2812340%29-blue)
 ![Version](https://img.shields.io/badge/version-1.0-brightgreen)
