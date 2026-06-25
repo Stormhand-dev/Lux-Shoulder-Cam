@@ -88,7 +88,7 @@ Values are in WoW internal units (yards). Going beyond these limits causes visua
 
 ## Credits
 
-- Camera patch technique ported from [UnitXP_SP3](https://github.com/allfoxwy/UnitXP_SP3) by allfoxwy
+- Camera patch technique ported from [UnitXP_SP3](https://codeberg.org/konaka/UnitXP_SP3) by Konaka
 - Hook library: [MinHook 1.3.4](https://github.com/TsudaKageyu/minhook) by Tsuda Kageyu (MIT)
 
 ---
