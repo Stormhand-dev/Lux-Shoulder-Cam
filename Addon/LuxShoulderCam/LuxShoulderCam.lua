@@ -27,14 +27,14 @@ local CMD_SET_HORIZ    = 13
 local CMD_RESET        = 14
 
 -- Step size per button click or keybinding press
-local STEP_HEIGHT = 0.11
-local STEP_HORIZ  = 0.11
+local STEP_HEIGHT = 0.10
+local STEP_HORIZ  = 0.10
 
 -- Clamp limits — values beyond these cause visual clipping or glitches
 local MIN_HEIGHT = -1.0
 local MAX_HEIGHT =  1.0
-local MIN_HORIZ  = -2.0
-local MAX_HORIZ  =  2.0
+local MIN_HORIZ  = -1.0
+local MAX_HORIZ  =  1.0
 
 -- =============================================================================
 -- DLL communication
@@ -44,9 +44,9 @@ local function dll_ok()
     return type(LSC) == "function"
 end
 
--- Call the DLL safely. Returns nil on error or if the DLL returned the
--- internal error sentinel (-99999), preventing error codes from being
--- mistaken for valid camera values.
+-- Call the DLL safely. Returns nil on error, on the internal error sentinel
+-- (-99999), or on the first-person lock sentinel (-88888) returned when an
+-- offset change is rejected because the camera is at max zoom-in.
 local function dll(cmdCode, arg)
     if not dll_ok() then return nil end
     local ok, result = pcall(LSC, cmdCode, arg)
@@ -56,6 +56,7 @@ local function dll(cmdCode, arg)
         return nil
     end
     if result == -99999 then return nil end
+    if result == -88888 then return nil end   -- locked (first-person)
     return result
 end
 
@@ -89,11 +90,37 @@ local function clamp(v, lo, hi)
     return v
 end
 
+-- Returns the active shapeshift form ID, but ONLY for druids. GetShapeshiftForm()
+-- also reports warrior stances (Battle/Defensive/Berserker) and paladin auras in
+-- 3.3.5, which would wrongly trigger the per-form camera logic and reset the
+-- camera on every stance/aura swap. For any non-druid class we force 0 (the
+-- humanoid / default slot), so the per-form path is druid-exclusive.
+local LSC_isDruid = nil
+function LSC_CurrentForm()
+    if LSC_isDruid == nil then
+        local _, class = UnitClass("player")
+        if class then LSC_isDruid = (class == "DRUID") end
+    end
+    if not LSC_isDruid then return 0 end
+    if type(GetShapeshiftForm) == "function" then
+        return GetShapeshiftForm() or 0
+    end
+    return 0
+end
+
 function LSC_SetHeight(v)
     v = clamp(v, MIN_HEIGHT, MAX_HEIGHT)
     local result = dll(CMD_SET_HEIGHT, v)
     if result then
-        LSC_Settings.height = result
+        -- Save to the current form's slot. Form 0 (humanoid) uses the main
+        -- height; shapeshift forms each keep their own calibrated offset.
+        local form = LSC_CurrentForm()
+        if form == 0 then
+            LSC_Settings.height = result
+        else
+            LSC_Settings.formHeight = LSC_Settings.formHeight or {}
+            LSC_Settings.formHeight[form] = result
+        end
         LSC_UpdateDisplay()
     end
 end
@@ -107,12 +134,24 @@ function LSC_SetHorizontal(v)
     end
 end
 
+-- Returns the currently-active vertical offset for the form the player is in.
+function LSC_CurrentFormHeight()
+    local form = LSC_CurrentForm()
+    if form == 0 then
+        return LSC_Settings.height or 0.0
+    end
+    LSC_Settings.formHeight = LSC_Settings.formHeight or {}
+    local h = LSC_Settings.formHeight[form]
+    if h == nil then h = LSC_Settings.height or 0.0 end
+    return h
+end
+
 function LSC_RaiseCamera()
-    LSC_SetHeight((LSC_Settings.height or 0) + STEP_HEIGHT)
+    LSC_SetHeight(LSC_CurrentFormHeight() + STEP_HEIGHT)
 end
 
 function LSC_LowerCamera()
-    LSC_SetHeight((LSC_Settings.height or 0) - STEP_HEIGHT)
+    LSC_SetHeight(LSC_CurrentFormHeight() - STEP_HEIGHT)
 end
 
 function LSC_MoveRight()
@@ -126,6 +165,7 @@ end
 function LSC_ResetCamera()
     LSC_Settings.height     = 0.0
     LSC_Settings.horizontal = 0.0
+    LSC_Settings.formHeight = {}
     dll(CMD_RESET)
     LSC_UpdateDisplay()
 end
@@ -134,7 +174,7 @@ end
 -- Update panel display
 -- =============================================================================
 function LSC_UpdateDisplay()
-    local h = LSC_Settings.height     or 0.0
+    local h = LSC_CurrentFormHeight()
     local x = LSC_Settings.horizontal or 0.0
 
     if LSC_Val_Height then
@@ -171,6 +211,65 @@ function LSC_OnLoad()
     lscFrame:RegisterEvent("ADDON_LOADED")
     lscFrame:RegisterEvent("PLAYER_LOGIN")
     lscFrame:RegisterEvent("PLAYER_ENTERING_WORLD")
+
+    -- Shapeshift compensation via per-frame polling. Events proved unreliable
+    -- in WoW 3.3.5 (UPDATE_SHAPESHIFT_FORM and UNIT_AURA do not fire on shift),
+    -- and GetShapeshiftForm() reads correctly, so we poll it every frame.
+    --
+    -- Each form has its own saved vertical offset (LSC_Settings.formHeight[form]).
+    -- When the form changes, we apply that form's offset. Form 0 = humanoid
+    -- uses the normal LSC_Settings.height. This lets the user calibrate a
+    -- different camera height per form (e.g. lower offset in Bear to counter
+    -- the model being shorter) with /lsc setform.
+    local shiftPoll = CreateFrame("Frame")
+    LSC_lastForm    = -1
+    LSC_pendingForm = nil   -- form we're waiting to settle before applying
+    LSC_settleTime  = 0     -- seconds accumulated since the change was seen
+
+    -- Delay before applying a new form's height. WoW repositions the camera
+    -- for a couple of frames right after a shapeshift; applying instantly
+    -- lands on a transitional position and then snaps. Waiting a short beat
+    -- lets the model settle so the offset applies once, cleanly.
+    local SETTLE_DELAY = 0.10   -- seconds (~6 frames at 60fps)
+
+    shiftPoll:SetScript("OnUpdate", function(self, dt)
+        if not dll_ok() then return end
+        local form = LSC_CurrentForm()   -- 0 for non-druids: never triggers
+
+        -- Detect a change and start (or restart) the settle timer.
+        if form ~= LSC_lastForm then
+            LSC_lastForm    = form
+            LSC_pendingForm = form
+            LSC_settleTime  = 0
+            return
+        end
+
+        -- Waiting for the model to settle after a detected change.
+        if LSC_pendingForm ~= nil then
+            LSC_settleTime = LSC_settleTime + dt
+            if LSC_settleTime >= SETTLE_DELAY then
+                LSC_ApplyFormHeight(LSC_pendingForm)
+                LSC_pendingForm = nil
+            end
+        end
+    end)
+end
+
+-- Applies the vertical offset appropriate for the given shapeshift form.
+-- Horizontal is unchanged (tracks player rotation regardless of form).
+function LSC_ApplyFormHeight(form)
+    if not dll_ok() then return end
+    local h
+    if form == 0 then
+        h = LSC_Settings.height or 0.0
+    else
+        LSC_Settings.formHeight = LSC_Settings.formHeight or {}
+        -- Default: same as humanoid height if this form was never calibrated
+        h = LSC_Settings.formHeight[form]
+        if h == nil then h = LSC_Settings.height or 0.0 end
+    end
+    dll(CMD_SET_HEIGHT, h)
+    LSC_UpdateDisplay()
 end
 
 function LSC_OnEvent(event, arg1)
